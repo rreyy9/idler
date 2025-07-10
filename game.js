@@ -1,3 +1,36 @@
+// Save Manager Class
+class SaveManager {
+    static SAVE_KEY = 'phaserGameSave';
+    
+    static save(gameState) {
+        const saveData = {
+            ...gameState,
+            lastSaveTime: Date.now(),
+            gameVersion: '1.0.0'
+        };
+        localStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
+        console.log('Game saved at tick', gameState.tickCount);
+    }
+    
+    static load() {
+        const saveData = localStorage.getItem(this.SAVE_KEY);
+        if (saveData) {
+            try {
+                return JSON.parse(saveData);
+            } catch (e) {
+                console.error('Failed to load save data:', e);
+                return null;
+            }
+        }
+        return null;
+    }
+    
+    static getOfflineTime(saveData) {
+        if (!saveData || !saveData.lastSaveTime) return 0;
+        return Date.now() - saveData.lastSaveTime;
+    }
+}
+
 // Basic Tick System
 class TickSystem {
     constructor(scene) {
@@ -11,13 +44,18 @@ class TickSystem {
         this.tickDisplay = null;
         this.randomDisplay = null;
         this.actionsDisplay = null;
+        this.progressBar = null;
+        this.progressText = null;
         
         // Random action tracking
         this.randomActions = [];
         this.maxDisplayActions = 5;
         
+        // Save system
+        this.saveInterval = 5; // Save every 5 ticks
+        
         this.setupVisualDisplay();
-        this.start();
+        this.loadGameOrStart();
     }
     
     setupVisualDisplay() {
@@ -52,6 +90,139 @@ class TickSystem {
             backgroundColor: '#000000',
             padding: { x: 10, y: 5 }
         });
+        
+        // Progress bar for offline processing (hidden by default)
+        this.setupProgressBar();
+    }
+    
+    setupProgressBar() {
+        this.progressBg = this.scene.add.rectangle(400, 300, 400, 30, 0x333333);
+        this.progressBar = this.scene.add.rectangle(200, 300, 0, 30, 0x00ff00);
+        this.progressText = this.scene.add.text(400, 300, '', {
+            fontSize: '16px',
+            fill: '#ffffff'
+        }).setOrigin(0.5);
+        
+        // Hide progress bar initially
+        this.hideProgressBar();
+    }
+    
+    showProgressBar(text = 'Processing...') {
+        this.progressBg.setVisible(true);
+        this.progressBar.setVisible(true);
+        this.progressText.setVisible(true);
+        this.progressText.setText(text);
+    }
+    
+    hideProgressBar() {
+        this.progressBg.setVisible(false);
+        this.progressBar.setVisible(false);
+        this.progressText.setVisible(false);
+    }
+    
+    updateProgressBar(progress, text) {
+        const width = 400 * progress;
+        this.progressBar.setSize(width, 30);
+        this.progressBar.x = 200 + (width / 2);
+        this.progressText.setText(text);
+    }
+    
+    loadGameOrStart() {
+        const saveData = SaveManager.load();
+        
+        if (saveData) {
+            const offlineTime = SaveManager.getOfflineTime(saveData);
+            const offlineHours = (offlineTime / (1000 * 60 * 60)).toFixed(1);
+            
+            console.log(`Welcome back! You were offline for ${offlineHours} hours`);
+            
+            if (offlineTime > this.tickInterval) {
+                this.processOfflineTime(saveData, offlineTime);
+            } else {
+                this.loadSaveData(saveData);
+                this.start();
+            }
+        } else {
+            console.log('Starting new game');
+            this.start();
+        }
+    }
+    
+    loadSaveData(saveData) {
+        this.tickCount = saveData.tickCount || 0;
+        this.randomActions = saveData.randomActions || [];
+        // Load other game state as needed
+    }
+    
+    processOfflineTime(saveData, offlineTime) {
+        this.loadSaveData(saveData);
+        
+        const missedTicks = Math.floor(offlineTime / this.tickInterval);
+        console.log(`Processing ${missedTicks} missed ticks...`);
+        
+        if (missedTicks <= 0) {
+            this.start();
+            return;
+        }
+        
+        this.showProgressBar(`Processing ${missedTicks} offline ticks...`);
+        
+        // Process ticks in batches to show progress
+        let processedTicks = 0;
+        const batchSize = Math.max(1, Math.floor(missedTicks / 100)); // Process in batches
+        
+        const processBatch = () => {
+            const ticksToProcess = Math.min(batchSize, missedTicks - processedTicks);
+            
+            for (let i = 0; i < ticksToProcess; i++) {
+                this.simulateOfflineTick();
+                processedTicks++;
+            }
+            
+            const progress = processedTicks / missedTicks;
+            this.updateProgressBar(progress, `Processed ${processedTicks}/${missedTicks} ticks`);
+            
+            if (processedTicks >= missedTicks) {
+                // Finished processing
+                setTimeout(() => {
+                    this.hideProgressBar();
+                    this.showOfflineSummary(missedTicks, offlineTime);
+                    this.start();
+                }, 500);
+            } else {
+                // Continue processing
+                setTimeout(processBatch, 1);
+            }
+        };
+        
+        processBatch();
+    }
+    
+    simulateOfflineTick() {
+        this.tickCount++;
+        const randomValue = Math.random();
+        this.processRandomActions(randomValue);
+        // Don't update visual display during offline simulation
+    }
+    
+    showOfflineSummary(missedTicks, offlineTime) {
+        const hours = Math.floor(offlineTime / (1000 * 60 * 60));
+        const minutes = Math.floor((offlineTime % (1000 * 60 * 60)) / (1000 * 60));
+        
+        const summaryText = `Welcome back!\nOffline for: ${hours}h ${minutes}m\nTicks processed: ${missedTicks}`;
+        
+        const summary = this.scene.add.text(400, 200, summaryText, {
+            fontSize: '18px',
+            fill: '#ffff00',
+            backgroundColor: '#000000',
+            padding: { x: 15, y: 10 },
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Remove summary after 3 seconds
+        setTimeout(() => {
+            summary.destroy();
+        }, 3000);
     }
     
     start() {
@@ -99,10 +270,24 @@ class TickSystem {
         // Update displays
         this.updateVisualDisplay(randomValue);
         
+        // Auto-save every few ticks
+        if (this.tickCount % this.saveInterval === 0) {
+            this.saveGame();
+        }
+        
         // Schedule next tick
         this.scheduleNextTick();
         
         console.log(`Tick ${this.tickCount}: Random value ${randomValue.toFixed(4)}`);
+    }
+    
+    saveGame() {
+        const gameState = {
+            tickCount: this.tickCount,
+            randomActions: this.randomActions,
+            lastTickTime: this.lastTickTime
+        };
+        SaveManager.save(gameState);
     }
     
     processRandomActions(randomValue) {
@@ -226,5 +411,12 @@ function create() {
         align: 'center'
     }).setOrigin(0.5);
 }
+
+// Handle page unload to save game
+window.addEventListener('beforeunload', () => {
+    if (tickSystem) {
+        tickSystem.saveGame();
+    }
+});
 
 const game = new Phaser.Game(config);
