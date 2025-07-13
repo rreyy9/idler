@@ -1,4 +1,4 @@
-// Main Game Initialization
+// Main Game Initialization with Stone Mining
 const config = {
     type: Phaser.AUTO,
     width: GameConfig.GAME.WIDTH,
@@ -12,27 +12,26 @@ const config = {
 let tickSystem;
 
 function create() {
-    // Original demo elements (positioned to not interfere with tick system)
-    this.add.text(400, 300, 'Hello Phaser!', {
+    // Original demo elements (positioned to not interfere with mining system)
+    this.add.text(400, 350, 'Hello Phaser!', {
         fontSize: '32px',
         fill: '#ffff00',
         stroke: '#000000',
         strokeThickness: 2
     }).setOrigin(0.5);
     
-    this.add.rectangle(400, 400, 200, 50, 0x00ff00);
+    this.add.rectangle(400, 450, 200, 50, 0x00ff00);
     
-    // Initialize the tick system
+    // Initialize the tick system (now includes mining systems)
     tickSystem = new TickSystem(this);
     
-    // Instructions for the player
-    this.add.text(400, 500, 
-        'Tick System Running!\n' +
-        'Watch the top-left for tick updates\n' +
-        'Rare events < 10%, Uncommon < 30%, Common < 60%\n' +
-        'Game auto-saves every 5 ticks',
+    // Updated instructions for the player
+    this.add.text(400, 550, 
+        'Stone Mining Game!\n' +
+        'Watch tick system (top-left) • Resources (middle-left) • Click stone to mine (top-right)\n' +
+        'Rare ticks give bonus stone & iron • Game auto-saves every 5 ticks • Works offline!',
         {
-            fontSize: '14px',
+            fontSize: '11px',
             fill: '#cccccc',
             align: 'center'
         }

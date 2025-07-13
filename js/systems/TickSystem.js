@@ -17,8 +17,21 @@ class TickSystem {
         // Random action tracking
         this.randomActions = [];
         
+        // Initialize systems
+        this.resourceManager = null;
+        this.stoneMiningSystem = null;
+        
         this.setupVisualDisplay();
+        this.setupSystems();
         this.loadGameOrStart();
+    }
+    
+    setupSystems() {
+        // Initialize resource manager
+        this.resourceManager = new ResourceManager(this.scene);
+        
+        // Initialize stone mining system
+        this.stoneMiningSystem = new StoneMiningSystem(this.scene, this, this.resourceManager);
     }
     
     setupVisualDisplay() {
@@ -62,7 +75,15 @@ class TickSystem {
     loadSaveData(saveData) {
         this.tickCount = saveData.tickCount || 0;
         this.randomActions = saveData.randomActions || [];
-        // Load other game state as needed
+        
+        // Load systems data
+        if (saveData.resources) {
+            this.resourceManager.loadSaveData(saveData.resources);
+        }
+        
+        if (saveData.stoneMining) {
+            this.stoneMiningSystem.loadSaveData(saveData.stoneMining);
+        }
     }
     
     processOfflineTime(saveData, offlineTime) {
@@ -116,7 +137,11 @@ class TickSystem {
         this.tickCount++;
         const randomValue = Math.random();
         this.processRandomActions(randomValue);
-        // Don't update visual display during offline simulation
+        
+        // Simulate mining if active
+        if (this.stoneMiningSystem && this.stoneMiningSystem.isActive) {
+            this.stoneMiningSystem.simulateMiningTick(randomValue, this.tickCount);
+        }
     }
     
     showOfflineSummary(missedTicks, offlineTime) {
@@ -271,7 +296,9 @@ class TickSystem {
         const gameState = {
             tickCount: this.tickCount,
             randomActions: this.randomActions,
-            lastTickTime: this.lastTickTime
+            lastTickTime: this.lastTickTime,
+            resources: this.resourceManager.getSaveData(),
+            stoneMining: this.stoneMiningSystem.getSaveData()
         };
         SaveManager.save(gameState);
     }

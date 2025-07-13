@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Phaser Game - Tick System</title>
+    <title>Stone Mining Game - Phaser Tick System</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,12 +18,13 @@
             </div>
         </div>
         
-        <!-- Optional game info panel -->
+        <!-- Game info panel -->
         <div class="game-info hidden" id="game-info">
-            <strong>Tick System Game</strong><br>
+            <strong>Stone Mining Game</strong><br>
             Version: 1.0.0<br>
             Auto-saves every 5 ticks<br>
-            Supports offline progression
+            Supports offline progression<br>
+            Click stone to toggle mining
         </div>
         
         <!-- Debug info (hidden by default) -->
@@ -41,6 +42,8 @@
     <script src="js/config/GameConfig.js"></script>
     <script src="js/systems/SaveManager.js"></script>
     <script src="js/ui/ProgressBar.js"></script>
+    <script src="js/systems/ResourceManager.js"></script>
+    <script src="js/systems/StoneMiningSystem.js"></script>
     <script src="js/systems/TickSystem.js"></script>
     <script src="js/main.js"></script>
 </body>

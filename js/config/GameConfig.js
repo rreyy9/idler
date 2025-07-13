@@ -34,6 +34,48 @@ const GameConfig = {
         COMMON_THRESHOLD: 0.6    // < 60%
     },
     
+    // Mining system configuration
+    MINING: {
+        MILESTONE_INTERVAL: 10, // Every 10th tick gets milestone bonus
+        EFFECT_DURATION: 300,   // Mining effect glow duration in ms
+        MESSAGE_FADE_DURATION: 2000, // Mining message fade time
+        
+        // Stone visual colors
+        STONE_COLORS: {
+            BASE: 0x808080,      // Gray
+            SHADOW: 0x707070,    // Darker gray
+            HIGHLIGHT: 0x909090, // Lighter gray
+            DARK: 0x606060,      // Dark gray
+            SPOT: 0x404040       // Very dark gray
+        },
+        
+        // Stone glow colors
+        GLOW_COLORS: {
+            ACTIVE: 0x00ffff,    // Cyan when mining
+            INACTIVE: 0x666666   // Dim gray when not mining
+        },
+        
+        // Mining effect colors by rarity
+        EFFECT_COLORS: {
+            RARE: 0xff00ff,      // Magenta
+            UNCOMMON: 0xffff00,  // Yellow
+            COMMON: 0x00ffff,    // Cyan
+            NORMAL: 0x00ff00     // Green
+        },
+        
+        // Resource rewards per tick
+        REWARDS: {
+            BASE_STONE: 1,
+            COMMON_STONE: 2,
+            UNCOMMON_STONE: 3,
+            RARE_STONE: 5,
+            UNCOMMON_IRON: 1,
+            RARE_IRON: 3,
+            MILESTONE_STONE: 2,
+            MILESTONE_IRON: 1
+        }
+    },
+    
     // UI Colors
     COLORS: {
         DEFAULT: '#00ff00',
@@ -82,6 +124,22 @@ const GameConfig = {
             fill: '#ffff00',
             backgroundColor: '#000000',
             padding: { x: 15, y: 10 },
+            align: 'center'
+        },
+        RESOURCE_DISPLAY: {
+            fontSize: '16px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 }
+        },
+        MINING_STATUS: {
+            fontSize: '14px',
+            fill: '#cccccc',
+            align: 'center'
+        },
+        MINING_MESSAGE: {
+            fontSize: '12px',
+            fill: '#ffff00',
             align: 'center'
         }
     }
